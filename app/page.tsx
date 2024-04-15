@@ -31,7 +31,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <SignedIn>
+      {/* <SignedIn>
         <SignOutButton>
           <Button>Sign out</Button>
         </SignOutButton>
@@ -40,7 +40,7 @@ export default function Home() {
         <SignInButton>
           <Button>Sign In</Button>
         </SignInButton>
-      </SignedOut>
+      </SignedOut> */}
       <Button
         onClick={() => {
           if (!orgId) return;
