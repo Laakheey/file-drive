@@ -8,7 +8,6 @@ const Header = () => {
         FileDrive
         <div className="gap-2 flex">
           <OrganizationSwitcher />
-          <UserButton />
         </div>
       </div>
     </div>
