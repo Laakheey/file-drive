@@ -20,7 +20,13 @@ const PlaceholderState = () => {
   );
 };
 
-export default function FileBrowser({title, favorites}: {title: string, favorites?: boolean }) {
+export default function FileBrowser({
+  title,
+  favorites,
+}: {
+  title: string;
+  favorites?: boolean;
+}) {
   const organization = useOrganization();
   const user = useUser();
   const [query, setQuery] = useState("");
@@ -30,16 +36,28 @@ export default function FileBrowser({title, favorites}: {title: string, favorite
     orgId = organization.organization?.id ?? user.user?.id;
   }
 
-  const files = useQuery(api.files.getFiles, orgId ? { orgId, query, favorites } : "skip");
+  const files = useQuery(
+    api.files.getFiles,
+    orgId ? { orgId, query, favorites } : "skip"
+  );
   const isLoading = files === undefined;
+
+  const allFavorites = useQuery(
+    api.files.getAllFavorite,
+    orgId ? { orgId } : "skip"
+  );
 
   return (
     <main className="container mx-auto pt-8">
       <div className="flex lg:gap-8 gap-3">
-        <SideNav/>
+        <SideNav />
         <div className="w-full">
           <div className="flex gap-1 justify-between items-center mb-8">
-            <h1 className={`font-bold lg:text-4xl ${title === 'Favorites' ? 'text-xl' : 'text-2xl'}`}>{title}</h1>
+            <h1
+              className={`font-bold lg:text-4xl ${title === "Favorites" ? "text-xl" : "text-2xl"}`}
+            >
+              {title}
+            </h1>
             <SearchBar query={query} setQuery={setQuery} />
             <UploadButton />
           </div>
@@ -56,7 +74,7 @@ export default function FileBrowser({title, favorites}: {title: string, favorite
 
               <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
                 {files?.map((file) => {
-                  return <FileCard key={file._id} file={file} />;
+                  return <FileCard key={file._id} file={file} allFavorites={allFavorites ?? []} />;
                 })}
               </div>
             </>

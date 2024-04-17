@@ -45,7 +45,13 @@ const getFileUrl = (fileId: Id<"_storage">): string => {
   return p;
 };
 
-const FileCardAction = ({ file }: { file: Doc<"files"> }) => {
+const FileCardAction = ({
+  file,
+  isFavorited,
+}: {
+  file: Doc<"files">;
+  isFavorited: boolean;
+}) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const deleteFile = useMutation(api.files.deleteFile);
   const { toast } = useToast();
@@ -93,8 +99,19 @@ const FileCardAction = ({ file }: { file: Doc<"files"> }) => {
               })
             }
           >
-            <StarIcon className="w-4 h-4" />
-            Favorites
+            {isFavorited ? (
+              <div className="flex gap-2 items-center">
+                <Image src={"/fav.svg"} height={16} width={16} alt="favorite" />
+                UnFavorite
+              </div>
+
+            ) : (
+              <div className="flex gap-2 items-center">
+                <StarIcon className="w-4 h-4" />
+                Favorite
+              </div>
+            )}
+            
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -110,13 +127,21 @@ const FileCardAction = ({ file }: { file: Doc<"files"> }) => {
   );
 };
 
-const FileCard = ({ file }: { file: Doc<"files"> }) => {
+const FileCard = ({
+  file,
+  allFavorites,
+}: {
+  file: Doc<"files">;
+  allFavorites: Doc<"favorites">[];
+}) => {
   const typeIcons = {
     image: <ImageIcon />,
     pdf: <FileTextIcon />,
     csv: <GanttChartIcon />,
     video: <VideoIcon />,
   } as Record<Doc<"files">["type"], ReactNode>;
+
+  const isFavorited = allFavorites.some((fav) => fav.fileId === file._id);
 
   return (
     <Card>
@@ -126,7 +151,7 @@ const FileCard = ({ file }: { file: Doc<"files"> }) => {
             {typeIcons[file.type]}
             {file.name}
           </div>
-          <FileCardAction file={file} />
+          <FileCardAction isFavorited={isFavorited} file={file} />
         </CardTitle>
       </CardHeader>
       <CardContent className="h-64 mb-4 flex justify-center items-center">
