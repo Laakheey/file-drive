@@ -4,6 +4,8 @@ import { useOrganization, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import UploadButton from "./upload-button";
 import FileCard from "./file-card";
+import Image from "next/image";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const organization = useOrganization();
@@ -18,16 +20,42 @@ export default function Home() {
 
   return (
     <main className="container mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Your Files</h1>
-        <UploadButton />
-      </div>
 
-      <div className="grid lg:grid-cols-4 gap-4 md:grid-cols-2 grid-cols-1">
-        {files?.map((file) => {
-          return <FileCard key={file._id} file={file} />;
-        })}
-      </div>
+      {
+        files === undefined && (
+          <div className="flex flex-col gap-8 items-center mt-12 text-gray-600">
+            <Loader2 className="h-32 w-32 animate-spin" />
+            Loading...
+          </div>
+        )
+      }
+
+      {files && files.length === 0 && (
+        <div className="flex flex-col gap-4 items-center mt-12">
+          <Image
+            alt="Empty image"
+            width={200}
+            height={200}
+            src={"/empty.svg"}
+          />
+          <div className="text-2xl">You have no files...</div>
+          <UploadButton />
+        </div>
+      )}
+
+      {files && files.length > 0 && (
+        <>
+          <div className="flex justify-between items-center mb-8 mt-8">
+            <h1 className="text-4xl font-bold">Your Files</h1>
+            <UploadButton />
+          </div>
+          <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
+            {files?.map((file) => {
+              return <FileCard key={file._id} file={file} />;
+            })}
+          </div>
+        </>
+      )}
     </main>
   );
 }
