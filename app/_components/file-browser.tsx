@@ -45,7 +45,7 @@ export default function FileBrowser({
   const allFavorites = useQuery(
     api.files.getAllFavorite,
     orgId ? { orgId } : "skip"
-  );
+  );  
 
   return (
     <main className="container mx-auto pt-8">

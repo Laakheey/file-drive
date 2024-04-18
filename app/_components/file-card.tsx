@@ -39,6 +39,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
+import { Protect } from "@clerk/nextjs";
 
 const getFileUrl = (fileId: Id<"_storage">): string => {
   let p = `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;
@@ -104,23 +105,24 @@ const FileCardAction = ({
                 <Image src={"/fav.svg"} height={16} width={16} alt="favorite" />
                 UnFavorite
               </div>
-
             ) : (
               <div className="flex gap-2 items-center">
                 <StarIcon className="w-4 h-4" />
                 Favorite
               </div>
             )}
-            
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="flex gap-1 text-red-500 items-center cursor-pointer"
-            onClick={() => setIsConfirmOpen(true)}
-          >
-            <TrashIcon className="w-4 h-4" />
-            Delete
-          </DropdownMenuItem>
+
+          <Protect role="org:admin" fallback={<></>}>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="flex gap-1 text-red-500 items-center cursor-pointer"
+              onClick={() => setIsConfirmOpen(true)}
+            >
+              <TrashIcon className="w-4 h-4" />
+              Delete
+            </DropdownMenuItem>
+          </Protect>
         </DropdownMenuContent>
       </DropdownMenu>
     </>

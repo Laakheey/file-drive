@@ -1,16 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import { MutationCtx, QueryCtx, internalMutation } from "./_generated/server";
+import { roles } from "./schema";
 
 export async function getUser(
   ctx: QueryCtx | MutationCtx,
   tokenIdentifier: string
 ) {
-  const identity = await ctx.auth.getUserIdentity();
-
-  if (!identity) {
-    throw new ConvexError("You must be logged in to upload a file!");
-  }
-
   const user = await ctx.db
     .query("users")
     .withIndex("by_tokenIdentifier", (q) =>
@@ -41,12 +36,37 @@ export const addOrgIdToUser = internalMutation({
   args: {
     tokenIdentifier: v.string(),
     orgId: v.string(),
+    role: roles,
+  },
+  async handler(ctx, args) {
+    console.log("roles", args.role);
+    const user = await getUser(ctx, args.tokenIdentifier);
+
+    await ctx.db.patch(user._id, {
+      orgIds: [...user.orgIds, { orgId: args.orgId, role: args.role }],
+    });
+  },
+});
+
+export const updateRoleForUserInOrg = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    orgId: v.string(),
+    role: roles,
   },
   async handler(ctx, args) {
     const user = await getUser(ctx, args.tokenIdentifier);
 
+    const org = user.orgIds.find(org => org.orgId === args.orgId);
+
+    if(!org){
+      throw new ConvexError("You are not a member of the organization")
+    }
+
+    org.role = args.role;
+
     await ctx.db.patch(user._id, {
-      orgIds: [...user.orgIds, args.orgId],
+      orgIds: user.orgIds
     });
   },
-});
+})
