@@ -46,6 +46,10 @@ export const FileCardAction = ({
   const me = useQuery(api.users.getMe);
 
   function downloadFile(url: string, fileType: string) {
+    toast({
+      variant: "default",
+      title: "File is being downloaded",
+    });
     const xhr = new XMLHttpRequest();
     xhr.responseType = "blob";
     xhr.onload = () => {
@@ -72,9 +76,16 @@ export const FileCardAction = ({
           downloadLink.download = "file";
       }
       downloadLink.click();
+      toast({
+        variant: "success",
+        title: "File has been successfully downloaded",
+      });
     };
     xhr.onerror = () => {
-      console.error("File download failed.");
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+      });
     };
     xhr.open("GET", url);
     xhr.send();

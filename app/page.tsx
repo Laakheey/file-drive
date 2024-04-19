@@ -1,5 +1,4 @@
 import Link from "next/link";
-import FileBrowser from "./_components/file-browser";
 import Image from "next/image";
 
 export default function HeroSection() {
