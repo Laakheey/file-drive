@@ -11,11 +11,11 @@ const SideNav = () => {
   const pathName = usePathname();
   return (
     <div className="w-32 flex flex-col gap-4">
-      <Link href={"/"}>
+      <Link href={"/dashboard/files"}>
         <Button
           variant={"link"}
           className={clsx("flex gap-2", {
-            "text-blue-400": pathName === "/",
+            "text-blue-400": pathName === "/dashboard/files",
           })}
         >
           <FilesIcon />

@@ -20,17 +20,11 @@ import Image from "next/image";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { formatRelative } from "date-fns";
 import { FileCardAction } from "./file-actions";
-import { boolean } from "zod";
-
-export const getFileUrl = (fileId: Id<"_storage">): string => {
-  let p = `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;
-  return p;
-};
 
 const FileCard = ({
   file,
 }: {
-  file: Doc<"files"> & { isFavourited: boolean };
+  file: Doc<"files"> & { isFavourited: boolean; url: string | null };
 }) => {
   const typeIcons = {
     image: <ImageIcon />,
@@ -59,19 +53,19 @@ const FileCard = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="h-64 mb-4 flex justify-center items-center">
-        {file.type === "image" && (
+        {file.type === "image" && file.url && (
           <Image
             alt={file.name}
             width={200}
             height={200}
-            src={getFileUrl(file.fileId)}
+            src={file.url}
           />
         )}
         {file.type === "csv" && <GanttChartIcon className="w-20 h-20" />}
         {file.type === "pdf" && <FileTextIcon className="w-20 h-20" />}
-        {file.type === "video" && (
+        {file.type === "video" && file.url && (
           <video
-            src={getFileUrl(file.fileId)}
+            src={file.url}
             controls
             className="w-[80%] rounded"
           ></video>

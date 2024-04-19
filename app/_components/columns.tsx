@@ -28,7 +28,7 @@ const UserCell = ({ userId }: { userId: Id<"users"> }) => {
   );
 };
 
-export const columns: ColumnDef<Doc<"files"> & { isFavourited: boolean }>[] = [
+export const columns: ColumnDef<Doc<"files"> & { isFavourited: boolean; url: string | null }>[] = [
   {
     accessorKey: "name",
     header: "Name",

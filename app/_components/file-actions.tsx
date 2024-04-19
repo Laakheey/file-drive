@@ -11,7 +11,7 @@ import {
   MoreVertical,
   StarIcon,
   TrashIcon,
-  UndoIcon
+  UndoIcon,
 } from "lucide-react";
 
 import {
@@ -30,14 +30,12 @@ import { api } from "@/convex/_generated/api";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { Protect } from "@clerk/nextjs";
-import { getFileUrl } from "./file-card";
-
 
 export const FileCardAction = ({
   file,
   isFavorited,
 }: {
-  file: Doc<"files">;
+  file: Doc<"files"> & { url: string | null };
   isFavorited: boolean;
 }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -46,6 +44,41 @@ export const FileCardAction = ({
   const { toast } = useToast();
   const favorite = useMutation(api.files.toggleFavorite);
   const me = useQuery(api.users.getMe);
+
+  function downloadFile(url: string, fileType: string) {
+    const xhr = new XMLHttpRequest();
+    xhr.responseType = "blob";
+    xhr.onload = () => {
+      const blob = xhr.response;
+      const downloadLink = document.createElement("a");
+      downloadLink.href = URL.createObjectURL(blob);
+      switch (fileType) {
+        case "image":
+          downloadLink.download = "image.png";
+          break;
+        case "image":
+          downloadLink.download = "image.jpg";
+          break;
+        case "application":
+          downloadLink.download = "document.pdf";
+          break;
+        case "text":
+          downloadLink.download = "data.csv";
+          break;
+        case "video":
+          downloadLink.download = "video.mp4";
+          break;
+        default:
+          downloadLink.download = "file";
+      }
+      downloadLink.click();
+    };
+    xhr.onerror = () => {
+      console.error("File download failed.");
+    };
+    xhr.open("GET", url);
+    xhr.send();
+  }
 
   return (
     <>
@@ -112,17 +145,24 @@ export const FileCardAction = ({
 
           <DropdownMenuItem
             className={`flex gap-1 items-center cursor-pointer`}
-            onClick={() => window.open(getFileUrl(file.fileId), "_blank")}
+            onClick={() => {
+              if (file.url) downloadFile(file.url, file.type);
+            }}
           >
             <DownloadIcon className="w-4 h-4" />
             Download
           </DropdownMenuItem>
 
-          <Protect condition={(check) => {
-            return check({
-                role: "org:admin"
-            }) || file.userId === me?._id;
-          }} fallback={<></>}>
+          <Protect
+            condition={(check) => {
+              return (
+                check({
+                  role: "org:admin",
+                }) || file.userId === me?._id
+              );
+            }}
+            fallback={<></>}
+          >
             {!file.isMarkedForDelete && <DropdownMenuSeparator />}
             <DropdownMenuItem
               className={`flex gap-1 items-center cursor-pointer ${file.isMarkedForDelete ? "text-green-500" : "text-red-500"}`}
