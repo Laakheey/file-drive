@@ -23,9 +23,11 @@ const PlaceholderState = () => {
 export default function FileBrowser({
   title,
   favorites,
+  deletedOnly,
 }: {
   title: string;
   favorites?: boolean;
+  deletedOnly?: boolean;
 }) {
   const organization = useOrganization();
   const user = useUser();
@@ -38,14 +40,14 @@ export default function FileBrowser({
 
   const files = useQuery(
     api.files.getFiles,
-    orgId ? { orgId, query, favorites } : "skip"
+    orgId ? { orgId, query, favorites, deletedOnly } : "skip"
   );
   const isLoading = files === undefined;
 
   const allFavorites = useQuery(
     api.files.getAllFavorite,
     orgId ? { orgId } : "skip"
-  );  
+  );
 
   return (
     <main className="container mx-auto pt-8">
@@ -74,7 +76,13 @@ export default function FileBrowser({
 
               <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
                 {files?.map((file) => {
-                  return <FileCard key={file._id} file={file} allFavorites={allFavorites ?? []} />;
+                  return (
+                    <FileCard
+                      key={file._id}
+                      file={file}
+                      allFavorites={allFavorites ?? []}
+                    />
+                  );
                 })}
               </div>
             </>

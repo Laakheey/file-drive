@@ -49,7 +49,7 @@ const SearchBar = ({
                 <Input
                   {...field}
                   placeholder="Your file name"
-                  className="focus:outline-none"
+                  className="focus-visible:ring-transparent"
                 />
               </FormControl>
               <FormMessage />

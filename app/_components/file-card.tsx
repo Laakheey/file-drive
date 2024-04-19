@@ -15,12 +15,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  DownloadIcon,
   FileTextIcon,
   GanttChartIcon,
   ImageIcon,
   MoreVertical,
   StarIcon,
   TrashIcon,
+  UndoIcon,
   VideoIcon,
 } from "lucide-react";
 
@@ -35,11 +37,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ReactNode, useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { Protect } from "@clerk/nextjs";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { format, formatDistance, formatRelative, subDays } from "date-fns";
 
 const getFileUrl = (fileId: Id<"_storage">): string => {
   let p = `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;
@@ -55,6 +59,7 @@ const FileCardAction = ({
 }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const deleteFile = useMutation(api.files.deleteFile);
+  const restoreFile = useMutation(api.files.restoreFile);
   const { toast } = useToast();
   const favorite = useMutation(api.files.toggleFavorite);
 
@@ -65,7 +70,8 @@ const FileCardAction = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this file?
+              File will be sent in trash and if not recovered in 30 days file
+              shall be deleted permanently
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -77,7 +83,7 @@ const FileCardAction = ({
                 });
                 toast({
                   variant: "success",
-                  title: "File deleted successfully",
+                  title: "File sent in trash successfully",
                 });
               }}
             >
@@ -92,35 +98,66 @@ const FileCardAction = ({
           <MoreVertical />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          {!file.isMarkedForDelete && (
+            <DropdownMenuItem
+              className="flex gap-1 items-center cursor-pointer"
+              onClick={() =>
+                favorite({
+                  fileId: file._id,
+                })
+              }
+            >
+              {isFavorited ? (
+                <div className="flex gap-2 items-center">
+                  <Image
+                    src={"/fav.svg"}
+                    height={16}
+                    width={16}
+                    alt="favorite"
+                  />
+                  UnFavorite
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <StarIcon className="w-4 h-4" />
+                  Favorite
+                </div>
+              )}
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuItem
-            className="flex gap-1 items-center cursor-pointer"
-            onClick={() =>
-              favorite({
-                fileId: file._id,
-              })
-            }
+            className={`flex gap-1 items-center cursor-pointer`}
+            onClick={() => window.open(getFileUrl(file.fileId), "_blank")}
           >
-            {isFavorited ? (
-              <div className="flex gap-2 items-center">
-                <Image src={"/fav.svg"} height={16} width={16} alt="favorite" />
-                UnFavorite
-              </div>
-            ) : (
-              <div className="flex gap-2 items-center">
-                <StarIcon className="w-4 h-4" />
-                Favorite
-              </div>
-            )}
+            <DownloadIcon className="w-4 h-4" />
+            Download
           </DropdownMenuItem>
 
           <Protect role="org:admin" fallback={<></>}>
-            <DropdownMenuSeparator />
+            {!file.isMarkedForDelete && <DropdownMenuSeparator />}
             <DropdownMenuItem
-              className="flex gap-1 text-red-500 items-center cursor-pointer"
-              onClick={() => setIsConfirmOpen(true)}
+              className={`flex gap-1 items-center cursor-pointer ${file.isMarkedForDelete ? "text-green-500" : "text-red-500"}`}
+              onClick={() => {
+                if (file.isMarkedForDelete) {
+                  restoreFile({
+                    fileId: file._id,
+                  });
+                } else {
+                  setIsConfirmOpen(true);
+                }
+              }}
             >
-              <TrashIcon className="w-4 h-4" />
-              Delete
+              {file.isMarkedForDelete ? (
+                <>
+                  <UndoIcon className="w-4 h-4" /> Restore
+                </>
+              ) : (
+                <>
+                  <TrashIcon className="w-4 h-4" />
+                  Delete
+                </>
+              )}
             </DropdownMenuItem>
           </Protect>
         </DropdownMenuContent>
@@ -145,12 +182,22 @@ const FileCard = ({
 
   const isFavorited = allFavorites.some((fav) => fav.fileId === file._id);
 
+  const userProfile = useQuery(api.files.getUserProfile, {
+    userId: file.userId,
+  });
+
+  let formattedDate = formatRelative(new Date(file._creationTime), new Date());
+  formattedDate =
+    formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <div className="flex justify-center items-center text-center gap-2">
+          <div className="flex justify-center items-center text-center gap-2 test-base font-normal">
+            <div className="flex justify-center">
             {typeIcons[file.type]}
+            </div>
             {file.name}
           </div>
           <FileCardAction isFavorited={isFavorited} file={file} />
@@ -175,10 +222,16 @@ const FileCard = ({
           ></video>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button onClick={() => window.open(getFileUrl(file.fileId), "_blank")}>
-          Download
-        </Button>
+      <CardFooter className="flex justify-between">
+        <div className="flex justify-end items-center gap-2">
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={userProfile?.imageUrl} />
+          </Avatar>
+          <div className="text-sm font-semibold">{userProfile?.name}</div>
+        </div>
+        <div className="text-sm text-gray-600">
+          {`Uploaded: ${formattedDate}`}
+        </div>
       </CardFooter>
     </Card>
   );

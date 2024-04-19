@@ -23,11 +23,49 @@ export async function getUser(
 export const createUser = internalMutation({
   args: {
     tokenIdentifier: v.string(),
+    name: v.string(),
+    imageUrl: v.string(),
+    email: v.string(),
   },
   async handler(ctx, args) {
+    if(!args.name.trim()){
+      args.name = args.email
+    }
     await ctx.db.insert("users", {
       tokenIdentifier: args.tokenIdentifier,
       orgIds: [],
+      name: args.name,
+      imageUrl: args.imageUrl,
+    });
+  },
+});
+
+export const updateUser = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    name: v.string(),
+    imageUrl: v.string(),
+    email: v.string()
+  },
+  async handler(ctx, args) {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier)
+      )
+      .first();
+
+    if(!user){
+      throw new ConvexError("No user found with this token")
+    };
+
+    if(!args.name.trim()){
+      args.name = args.email
+    }
+
+    await ctx.db.patch(user._id, {
+      name: args.name,
+      imageUrl: args.imageUrl,
     });
   },
 });
@@ -57,16 +95,16 @@ export const updateRoleForUserInOrg = internalMutation({
   async handler(ctx, args) {
     const user = await getUser(ctx, args.tokenIdentifier);
 
-    const org = user.orgIds.find(org => org.orgId === args.orgId);
+    const org = user.orgIds.find((org) => org.orgId === args.orgId);
 
-    if(!org){
-      throw new ConvexError("You are not a member of the organization")
+    if (!org) {
+      throw new ConvexError("You are not a member of the organization");
     }
 
     org.role = args.role;
 
     await ctx.db.patch(user._id, {
-      orgIds: user.orgIds
+      orgIds: user.orgIds,
     });
   },
-})
+});

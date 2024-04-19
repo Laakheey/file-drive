@@ -16,9 +16,16 @@ export default defineSchema({
     type: fileType,
     orgId: v.string(),
     fileId: v.id("_storage"),
-  }).index("by_orgId", ["orgId"]),
+    userId: v.id('users'),
+    isMarkedForDelete: v.optional(v.boolean()),
+    markedForDeletedTime: v.optional(v.string())
+  })
+    .index("by_orgId", ["orgId"])
+    .index("by_isMarkedForDelete", ["isMarkedForDelete"]),
   users: defineTable({
     tokenIdentifier: v.string(),
+    name: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
     orgIds: v.array(
       v.object({
         orgId: v.string(),
