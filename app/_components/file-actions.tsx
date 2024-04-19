@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "@/components/ui/use-toast";
 import Image from "next/image";
@@ -45,6 +45,7 @@ export const FileCardAction = ({
   const restoreFile = useMutation(api.files.restoreFile);
   const { toast } = useToast();
   const favorite = useMutation(api.files.toggleFavorite);
+  const me = useQuery(api.users.getMe);
 
   return (
     <>
@@ -117,7 +118,11 @@ export const FileCardAction = ({
             Download
           </DropdownMenuItem>
 
-          <Protect role="org:admin" fallback={<></>}>
+          <Protect condition={(check) => {
+            return check({
+                role: "org:admin"
+            }) || file.userId === me?._id;
+          }} fallback={<></>}>
             {!file.isMarkedForDelete && <DropdownMenuSeparator />}
             <DropdownMenuItem
               className={`flex gap-1 items-center cursor-pointer ${file.isMarkedForDelete ? "text-green-500" : "text-red-500"}`}

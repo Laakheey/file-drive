@@ -12,6 +12,13 @@ import FileCard from "./file-card";
 import { DataTable } from "./fileTable";
 import { columns } from "./columns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PlaceholderState = () => {
   return (
@@ -35,6 +42,7 @@ export default function FileBrowser({
   const organization = useOrganization();
   const user = useUser();
   const [query, setQuery] = useState("");
+  const [type, setType] = useState("all")
 
   let orgId: string | undefined = undefined;
   if (organization.isLoaded && user.isLoaded) {
@@ -43,7 +51,7 @@ export default function FileBrowser({
 
   const files = useQuery(
     api.files.getFiles,
-    orgId ? { orgId, query, favorites, deletedOnly } : "skip"
+    orgId ? { orgId, type, query, favorites, deletedOnly } : "skip"
   );
   const isLoading = files === undefined;
 
@@ -74,16 +82,33 @@ export default function FileBrowser({
           </div>
 
           <Tabs defaultValue="grid">
-            <TabsList>
-              <TabsTrigger value="grid" className="flex gap-2 items-center">
-                <GridIcon/>
-                Grid
-              </TabsTrigger>
-              <TabsTrigger value="table" className="flex gap-2 items-center">
-                <RowsIcon/>
-                Table
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex justify-between items-center">
+              <TabsList>
+                <TabsTrigger value="grid" className="flex gap-2 items-center">
+                  <GridIcon />
+                  Grid
+                </TabsTrigger>
+                <TabsTrigger value="table" className="flex gap-2 items-center">
+                  <RowsIcon />
+                  Table
+                </TabsTrigger>
+              </TabsList>
+              <div className="">
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger className="w-[180px]" defaultValue={'all'}>
+                    <SelectValue/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="image">Image</SelectItem>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <TabsContent value="grid">
               <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
                 {modifiedFiles?.map((file) => {
