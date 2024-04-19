@@ -3,12 +3,15 @@ import { api } from "@/convex/_generated/api";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import { GridIcon, Loader2, RowsIcon } from "lucide-react";
 import { useState } from "react";
 import SideNav from "../SideNav";
 import SearchBar from "./SearchBar";
 import UploadButton from "./upload-button";
 import FileCard from "./file-card";
+import { DataTable } from "./fileTable";
+import { columns } from "./columns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PlaceholderState = () => {
   return (
@@ -49,6 +52,12 @@ export default function FileBrowser({
     orgId ? { orgId } : "skip"
   );
 
+  const modifiedFiles =
+    files?.map((file) => ({
+      ...file,
+      isFavourited: (allFavorites ?? []).some((fav) => fav.fileId === file._id),
+    })) ?? [];
+
   return (
     <main className="container mx-auto pt-8">
       <div className="flex lg:gap-8 gap-3">
@@ -63,6 +72,30 @@ export default function FileBrowser({
             <SearchBar query={query} setQuery={setQuery} />
             <UploadButton />
           </div>
+
+          <Tabs defaultValue="grid">
+            <TabsList>
+              <TabsTrigger value="grid" className="flex gap-2 items-center">
+                <GridIcon/>
+                Grid
+              </TabsTrigger>
+              <TabsTrigger value="table" className="flex gap-2 items-center">
+                <RowsIcon/>
+                Table
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="grid">
+              <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
+                {modifiedFiles?.map((file) => {
+                  return <FileCard key={file._id} file={file} />;
+                })}
+              </div>
+            </TabsContent>
+            <TabsContent value="table">
+              <DataTable columns={columns} data={modifiedFiles} />
+            </TabsContent>
+          </Tabs>
+
           {isLoading && (
             <div className="flex flex-col gap-8 items-center mt-12 text-gray-600">
               <Loader2 className="h-32 w-32 animate-spin" />
@@ -70,23 +103,7 @@ export default function FileBrowser({
             </div>
           )}
 
-          {!isLoading && (
-            <>
-              {files.length === 0 && <PlaceholderState />}
-
-              <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
-                {files?.map((file) => {
-                  return (
-                    <FileCard
-                      key={file._id}
-                      file={file}
-                      allFavorites={allFavorites ?? []}
-                    />
-                  );
-                })}
-              </div>
-            </>
-          )}
+          {!isLoading && <>{files.length === 0 && <PlaceholderState />}</>}
         </div>
       </div>
     </main>
