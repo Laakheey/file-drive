@@ -128,7 +128,7 @@ export default function FileBrowser({
             </div>
           )}
 
-          {!isLoading && <>{files.length === 0 && <PlaceholderState />}</>}
+          {!isLoading && !deletedOnly && <>{files.length === 0 && <PlaceholderState />}</>}
         </div>
       </div>
     </main>
